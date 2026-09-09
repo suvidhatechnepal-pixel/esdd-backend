@@ -14,6 +14,7 @@ function signToken(user) {
   );
 }
 
+// POST /auth/login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
@@ -32,6 +33,7 @@ router.post('/login', async (req, res) => {
   });
 });
 
+// POST /auth/change-password  (also used to satisfy must_reset_password on first login)
 router.post('/change-password', requireAuth, async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
   if (!newPassword || newPassword.length < 8) {
@@ -50,6 +52,7 @@ router.post('/change-password', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// GET /auth/me
 router.get('/me', requireAuth, (req, res) => {
   res.json({ user: req.user });
 });

@@ -17,6 +17,7 @@ function withComputedRating(row, checklist) {
   return { ...row, rating };
 }
 
+// GET /assessments - assessors see only their own; admin/reviewer see everyone's
 router.get('/', async (req, res) => {
   const { checklist } = await currentChecklist();
   const isPrivileged = req.user.role === 'admin' || req.user.role === 'reviewer';
@@ -29,6 +30,7 @@ router.get('/', async (req, res) => {
   res.json({ assessments: rows.map((r) => withComputedRating(r, checklist)) });
 });
 
+// GET /assessments/:id
 router.get('/:id', async (req, res) => {
   const { checklist } = await currentChecklist();
   const { rows } = await pool.query('SELECT * FROM assessments WHERE id = $1', [req.params.id]);
@@ -40,6 +42,7 @@ router.get('/:id', async (req, res) => {
   res.json({ assessment: withComputedRating(row, checklist) });
 });
 
+// POST /assessments - create a new draft, owned by the logged-in user
 router.post('/', async (req, res) => {
   const { id: checklistVersionId } = await currentChecklist();
   const b = req.body || {};
@@ -55,6 +58,7 @@ router.post('/', async (req, res) => {
   res.status(201).json({ assessment: withComputedRating(rows[0], checklist) });
 });
 
+// PATCH /assessments/:id - owner can edit their own draft; admin can edit any
 router.patch('/:id', async (req, res) => {
   const { rows: existingRows } = await pool.query('SELECT * FROM assessments WHERE id = $1', [req.params.id]);
   const existing = existingRows[0];
@@ -78,6 +82,8 @@ router.patch('/:id', async (req, res) => {
   res.json({ assessment: withComputedRating(rows[0], checklist) });
 });
 
+// POST /assessments/:id/submit - assessor locks the draft and escalates for review
+// (mirrors Step 6 "Escalation" of the Guideline: Medium/High must go to a reviewer)
 router.post('/:id/submit', async (req, res) => {
   const { rows: existingRows } = await pool.query('SELECT * FROM assessments WHERE id = $1', [req.params.id]);
   const existing = existingRows[0];
@@ -95,6 +101,7 @@ router.post('/:id/submit', async (req, res) => {
   res.json({ assessment: withComputedRating(rows[0], checklist) });
 });
 
+// POST /assessments/:id/review - admin/reviewer only: approve or reject a submitted assessment
 router.post('/:id/review', requireRole('admin', 'reviewer'), async (req, res) => {
   const { decision, notes } = req.body || {};
   if (!['approved', 'rejected'].includes(decision)) {
@@ -110,6 +117,7 @@ router.post('/:id/review', requireRole('admin', 'reviewer'), async (req, res) =>
   res.json({ assessment: withComputedRating(rows[0], checklist) });
 });
 
+// DELETE /assessments/:id - owner (draft only) or admin
 router.delete('/:id', async (req, res) => {
   const { rows: existingRows } = await pool.query('SELECT * FROM assessments WHERE id = $1', [req.params.id]);
   const existing = existingRows[0];
@@ -123,6 +131,7 @@ router.delete('/:id', async (req, res) => {
   res.status(204).end();
 });
 
+// POST /assessments/:id/draft-summary - server-side AI draft (uses ANTHROPIC_API_KEY, never exposed to the browser)
 router.post('/:id/draft-summary', async (req, res) => {
   if (!process.env.ANTHROPIC_API_KEY) {
     return res.status(500).json({ error: 'AI drafting is not configured on this server yet (missing ANTHROPIC_API_KEY)' });

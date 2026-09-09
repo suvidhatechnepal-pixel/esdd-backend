@@ -11,6 +11,7 @@ function ask(question) {
 async function seed() {
   const client = await pool.connect();
   try {
+    // 1. Seed the checklist, only if none exists yet
     const { rows: existing } = await client.query('SELECT id FROM checklist_versions WHERE is_current = true LIMIT 1');
     if (existing.length === 0) {
       await client.query(
@@ -22,6 +23,7 @@ async function seed() {
       console.log('Checklist already seeded - skipping.');
     }
 
+    // 2. Create the first admin user, only if no users exist yet
     const { rows: userCount } = await client.query('SELECT count(*)::int FROM users');
     if (userCount[0].count === 0) {
       console.log('\nNo users exist yet - creating the first Admin account.');

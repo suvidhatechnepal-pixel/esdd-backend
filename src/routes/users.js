@@ -7,6 +7,7 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 const router = express.Router();
 router.use(requireAuth);
 
+// GET /users - admin only: list everyone
 router.get('/', requireRole('admin'), async (req, res) => {
   const { rows } = await pool.query(
     'SELECT id, email, name, role, is_active, created_at FROM users ORDER BY created_at DESC'
@@ -14,6 +15,7 @@ router.get('/', requireRole('admin'), async (req, res) => {
   res.json({ users: rows });
 });
 
+// POST /users - admin only: invite a new user with a temporary password
 router.post('/', requireRole('admin'), async (req, res) => {
   const { email, name, role } = req.body || {};
   if (!email || !name || !['admin', 'assessor', 'reviewer'].includes(role)) {
@@ -27,6 +29,9 @@ router.post('/', requireRole('admin'), async (req, res) => {
        VALUES ($1, $2, $3, $4, true) RETURNING id, email, name, role, created_at`,
       [email.trim().toLowerCase(), name.trim(), hash, role]
     );
+    // NOTE: wire this to real email delivery before going live with real staff -
+    // for now the temp password is returned once in the response for the admin
+    // to relay manually.
     res.status(201).json({ user: rows[0], tempPassword });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'A user with that email already exists' });
@@ -34,6 +39,7 @@ router.post('/', requireRole('admin'), async (req, res) => {
   }
 });
 
+// PATCH /users/:id - admin only: change role or active status
 router.patch('/:id', requireRole('admin'), async (req, res) => {
   const { role, isActive } = req.body || {};
   const fields = [];

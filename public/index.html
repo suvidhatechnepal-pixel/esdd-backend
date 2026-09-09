@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESDD Risk Console</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --ink:        #16233A; --ink-soft: #3C4A61;
+  --paper:      #F2F1EA; --paper-2: #E7E5DA; --line: #D6D3C4;
+  --navy:       #101B2D; --navy-2: #1B2C46;
+  --low: #3F6B4F; --low-bg: #E4ECE4;
+  --med: #A9782E; --med-bg: #F1E7D2;
+  --high: #A1403A; --high-bg: #F2E0DD;
+  --white: #FCFBF8;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: 'IBM Plex Sans', sans-serif; color: var(--ink);
+  background: var(--paper); min-height: 100vh; font-size: 14px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, .serif { font-family: 'Newsreader', serif; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+button { font-family: inherit; cursor: pointer; }
+input:not([type="radio"]):not([type="checkbox"]), select, textarea {
+  font-family: inherit; font-size: 13px; color: var(--ink);
+  background: var(--white); border: 1px solid var(--line); border-radius: 3px;
+  padding: 8px 10px; width: 100%;
+}
+input[type="radio"], input[type="checkbox"] { width: 16px; height: 16px; flex: none; padding: 0; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--navy-2); box-shadow: 0 0 0 3px rgba(27,44,70,0.1); }
+::placeholder { color: #9B9787; }
+
+#app { display: flex; min-height: 100vh; }
+
+/* ---- Login / password screens ---- */
+#auth-wrap { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100vh; }
+.auth-card { background: var(--white); border: 1px solid var(--line); border-radius: 8px; padding: 40px; width: 380px; max-width: 90vw; }
+.auth-card .mark { width: 40px; height: 40px; border: 1.5px solid var(--navy); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--navy); margin-bottom: 18px; }
+.auth-card h2 { font-size: 22px; margin: 0 0 6px; color: var(--navy); }
+.auth-card .sub { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 22px; }
+.auth-field { margin-bottom: 14px; }
+.auth-field label { display: block; font-size: 11.5px; color: var(--ink-soft); margin-bottom: 5px; font-weight: 500; }
+.auth-err { background: var(--high-bg); color: var(--high); border-radius: 4px; padding: 9px 12px; font-size: 12.5px; margin-bottom: 14px; }
+.btn { border: none; border-radius: 3px; padding: 10px 18px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; }
+.btn-primary { background: var(--navy); color: #F4F2EA; width: 100%; justify-content: center; }
+.btn-primary:hover { background: var(--navy-2); }
+.btn-primary:disabled { opacity: .6; cursor: default; }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn-ghost:hover { border-color: var(--navy-2); }
+.btn-danger { background: transparent; color: var(--high); border: 1px solid var(--high); }
+.btn-danger:hover { background: var(--high-bg); }
+
+/* ---- Sidebar ---- */
+#sidebar { width: 232px; min-width: 232px; background: var(--navy); color: #D7DCE6; padding: 26px 20px; display: flex; flex-direction: column; gap: 22px; }
+.brand .mark { width: 30px; height: 30px; border: 1.5px solid #6E7FA0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9FB0CE; margin-bottom: 8px; }
+.brand h1 { font-size: 19px; color: #F4F2EA; font-weight: 600; margin: 0; line-height: 1.25; }
+.brand .tag { font-size: 10.5px; color: #7C8BA8; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 2px; }
+#nav { display: flex; flex-direction: column; gap: 2px; }
+#nav button { all: unset; cursor: pointer; padding: 9px 10px; border-radius: 4px; font-size: 13px; color: #B7C0D4; display: flex; align-items: center; gap: 9px; }
+#nav button .dot { width: 5px; height: 5px; border-radius: 50%; background: #48577A; flex-shrink: 0; }
+#nav button:hover { background: #182741; color: #EDEBE0; }
+#nav button.active { background: #23375A; color: #F4F2EA; }
+#nav button.active .dot { background: #C79A4B; }
+.sb-foot { margin-top: auto; font-size: 11px; color: #5C6A87; line-height: 1.6; border-top: 1px solid #24344F; padding-top: 14px; }
+.sb-user { font-size: 12px; color: #9FB0CE; border-bottom: 1px solid #24344F; padding-bottom: 14px; margin-bottom: 4px; }
+.sb-user .role { text-transform: uppercase; font-size: 10px; letter-spacing: .6px; color: #6E7FA0; margin-top: 2px; }
+.sb-logout { all: unset; cursor: pointer; font-size: 11.5px; color: #8695B4; margin-top: 8px; }
+.sb-logout:hover { color: #EDEBE0; }
+
+/* ---- Main ---- */
+#main { flex: 1; padding: 34px 42px 60px; max-width: 1180px; }
+#topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 26px; gap: 20px; }
+#topbar h2 { font-size: 26px; font-weight: 600; margin: 0 0 4px; color: var(--navy); }
+#topbar .sub { color: var(--ink-soft); font-size: 13px; max-width: 560px; }
+
+.card { background: var(--white); border: 1px solid var(--line); border-radius: 5px; padding: 22px 24px; margin-bottom: 18px; }
+.card h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.9px; color: var(--ink-soft); font-weight: 600; margin: 0 0 16px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field label { display: block; font-size: 11.5px; color: var(--ink-soft); margin-bottom: 5px; font-weight: 500; }
+
+.stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+.stat { background: var(--white); border: 1px solid var(--line); border-radius: 5px; padding: 15px 16px; }
+.stat .n { font-family: 'Newsreader', serif; font-size: 30px; font-weight: 600; color: var(--navy); line-height: 1; }
+.stat .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--ink-soft); margin-top: 6px; }
+.stat.low .n { color: var(--low); } .stat.med .n { color: var(--med); } .stat.high .n { color: var(--high); }
+
+.searchrow { display: flex; gap: 10px; margin-bottom: 14px; }
+.searchrow input { max-width: 320px; } .searchrow select { max-width: 200px; }
+
+table { width: 100%; border-collapse: collapse; background: var(--white); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--ink-soft); font-weight: 600; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--paper-2); }
+td { padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 13px; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr.row:hover { background: #FAF9F4; cursor: pointer; }
+td.client { font-weight: 600; color: var(--navy); } td.muted { color: var(--ink-soft); }
+
+.badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+.badge.low { background: var(--low-bg); color: var(--low); } .badge.low::before { background: var(--low); }
+.badge.medium { background: var(--med-bg); color: var(--med); } .badge.medium::before { background: var(--med); }
+.badge.high { background: var(--high-bg); color: var(--high); } .badge.high::before { background: var(--high); }
+.badge.pending { background: #EAE8DF; color: #857F6B; } .badge.pending::before { background: #857F6B; }
+.badge.status { background: #E4ECE4; color: var(--low); }
+.badge.status.submitted { background: #F1E7D2; color: var(--med); }
+.badge.status.rejected { background: var(--high-bg); color: var(--high); }
+.badge.status.draft { background: #EAE8DF; color: #857F6B; }
+
+.empty { text-align: center; padding: 60px 20px; color: var(--ink-soft); }
+.empty .serif { font-size: 20px; color: var(--navy); margin-bottom: 6px; }
+
+.qsection > .sname { font-family: 'Newsreader', serif; font-size: 17px; font-weight: 600; color: var(--navy); margin: 30px 0 12px; padding-bottom: 8px; border-bottom: 1.5px solid var(--navy); display: flex; align-items: baseline; gap: 10px; }
+.qsection > .sname .n { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #9B9787; font-weight: 500; }
+.q { background: var(--white); border: 1px solid var(--line); border-radius: 5px; padding: 18px 20px; margin-bottom: 12px; }
+.q .qhead { display: flex; gap: 12px; margin-bottom: 12px; }
+.q .qnum { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--med); font-weight: 600; padding-top: 2px; flex-shrink: 0; }
+.q .qtext { font-size: 14px; color: var(--ink); font-weight: 500; flex: 1; }
+.q .qtext .excl { display: inline-block; margin-left: 8px; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: #9B9787; border: 1px solid var(--line); border-radius: 3px; padding: 1px 6px; font-weight: 600; vertical-align: 2px; }
+.opts { display: flex; flex-direction: column; gap: 7px; margin-left: 32px; }
+.opt { display: flex; align-items: flex-start; gap: 9px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 4px; }
+.opt:hover { border-color: #A9A491; }
+.opt.sel-a { border-color: var(--low); background: var(--low-bg); }
+.opt.sel-b { border-color: var(--med); background: var(--med-bg); }
+.opt.sel-c { border-color: var(--high); background: var(--high-bg); }
+.opt.sel-d { border-color: #8B8875; background: #EDEBE1; }
+.opt input { margin-top: 3px; accent-color: var(--navy); }
+.opt .otext { font-size: 12.5px; color: var(--ink); cursor: pointer; flex: 1; }
+.opt .olabel { font-family: 'IBM Plex Mono', monospace; font-weight: 700; margin-right: 4px; }
+.q .comment { margin-left: 32px; margin-top: 10px; }
+.q .comment label { font-size: 10.5px; color: #9B9787; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; display: block; }
+.q .comment textarea { min-height: 44px; font-size: 12.5px; resize: vertical; }
+
+#meterbar { position: sticky; top: 0; z-index: 5; background: var(--paper); padding: 14px 0 18px; margin: -14px 0 8px; }
+.meter { background: var(--navy); border-radius: 6px; padding: 18px 22px; color: #EDEBE0; }
+.meter .mtop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.meter .mtop .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #8F9BB5; }
+.meter .mtop .val { font-family: 'Newsreader', serif; font-size: 22px; font-weight: 700; }
+.meter .mtop .val.low { color: #7FB88F; } .meter .mtop .val.medium { color: #E3B25E; }
+.meter .mtop .val.high { color: #E38079; } .meter .mtop .val.pending { color: #97A2BC; }
+.track { display: flex; gap: 4px; height: 8px; border-radius: 5px; overflow: hidden; margin-bottom: 10px; }
+.track .seg { flex: 1; background: #2B3B58; }
+.track .seg.low.active { background: #4E8562; } .track .seg.medium.active { background: #C79A4B; } .track .seg.high.active { background: #B85850; }
+.meter .why { font-size: 12px; color: #A7B0C6; } .meter .why b { color: #EDEBE0; font-weight: 600; }
+.meter .progress { font-size: 11px; color: #7C88A4; margin-top: 8px; }
+
+.formfoot { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+.formfoot .left { display: flex; gap: 10px; }
+
+.summary .shead { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+.summary .shead .shint { font-size: 11.5px; color: var(--ink-soft); max-width: 480px; }
+.ai-btn { background: var(--navy); color: #F4F2EA; border: none; border-radius: 3px; padding: 9px 14px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.ai-btn:disabled { opacity: .55; }
+.sumfield { margin-bottom: 16px; } .sumfield label { display: block; font-size: 11.5px; color: var(--ink-soft); margin-bottom: 5px; font-weight: 500; }
+.sumfield textarea { min-height: 70px; font-size: 13px; resize: vertical; }
+.ai-note { font-size: 10.5px; color: #9B9787; margin-top: 4px; }
+
+.icon-btn { all: unset; cursor: pointer; font-size: 11px; color: var(--ink-soft); padding: 5px 9px; border: 1px solid var(--line); border-radius: 3px; }
+.icon-btn:hover { border-color: var(--navy-2); color: var(--navy); }
+.note { font-size: 11.5px; color: var(--ink-soft); background: var(--paper-2); border: 1px solid var(--line); border-radius: 4px; padding: 10px 13px; margin-bottom: 18px; }
+.toast { position: fixed; bottom: 22px; right: 32px; background: var(--navy); color: #F4F2EA; padding: 11px 18px; border-radius: 4px; font-size: 12.5px; box-shadow: 0 6px 20px rgba(0,0,0,.25); z-index: 50; }
+
+.adminq { background: var(--white); border: 1px solid var(--line); border-radius: 5px; padding: 16px 18px; margin-bottom: 12px; }
+.adminq textarea { min-height: 54px; margin-bottom: 8px; }
+.adminq .optrow { display: flex; gap: 8px; margin-bottom: 6px; align-items: flex-start; }
+.adminq .optrow .olabel { font-family: 'IBM Plex Mono', monospace; font-weight: 700; padding-top: 9px; width: 16px; flex-shrink: 0; }
+.adminq .optrow textarea { min-height: 38px; }
+.adminq .rowtop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.adminq .rowtop .qid { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--med); font-weight: 600; }
+.toggle { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--ink-soft); }
+
+.userrow { display: grid; grid-template-columns: 1fr 1fr 120px 90px; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.userrow:last-child { border-bottom: none; }
+.pill { font-size: 10px; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; font-weight: 700; background: var(--paper-2); color: var(--ink-soft); width: fit-content; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+  const root = document.getElementById('app');
+  const API = ''; // same-origin: served by the same Express app
+
+  // ---------------- State ----------------
+  let state = {
+    token: localStorage.getItem('esdd_token') || null,
+    user: JSON.parse(localStorage.getItem('esdd_user') || 'null'),
+    area: 'ecosystem',      // ecosystem | esdd
+    view: 'dashboard',      // dashboard | form | admin-checklist | admin-users | review
+    authView: 'login',      // login | force-password
+    checklist: null,
+    assessments: [],
+    current: null,
+    search: '', filter: 'all',
+    loading: false, toast: null, drafting: false, draftError: null,
+    authError: null, authBusy: false,
+  };
+
+  function showToast(msg){ state.toast = msg; render(); setTimeout(()=>{ state.toast = null; render(); }, 2600); }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function fmtDate(d){ if(!d) return '\u2014'; try { return new Date(d).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); } catch(e){ return d; } }
+
+  // ---------------- API helper ----------------
+  async function api(path, opts={}){
+    const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers||{});
+    if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+    const res = await fetch(API + path, Object.assign({}, opts, { headers }));
+    if (res.status === 401) { logout(); throw new Error('Session expired'); }
+    let data = null;
+    try { data = await res.json(); } catch(e) {}
+    if (!res.ok) throw new Error((data && data.error) || ('Request failed (' + res.status + ')'));
+    return data;
+  }
+
+  function logout(){
+    state.token = null; state.user = null;
+    localStorage.removeItem('esdd_token'); localStorage.removeItem('esdd_user');
+    state.area = 'ecosystem'; state.view = 'dashboard'; state.authView = 'login';
+    render();
+  }
+
+  function isPrivileged(){ return state.user && (state.user.role === 'admin' || state.user.role === 'reviewer'); }
+  function isAdmin(){ return state.user && state.user.role === 'admin'; }
+
+  // ---------------- Rating (mirrors server logic, for live preview only - server is source of truth) ----------------
+  function computeRating(checklist, answers){
+    const rated = [];
+    checklist.sections.forEach(sec => sec.questions.forEach(q => { if(!q.exclude) rated.push(q); }));
+    let answeredCount = 0; const cHits=[], bHits=[];
+    rated.forEach(q => {
+      const ans = answers[q.id];
+      if (ans && ans.option) { answeredCount++; if(ans.option==='c') cHits.push(q.id); else if(ans.option==='b') bHits.push(q.id); }
+    });
+    let tier = 'low'; if (cHits.length) tier='high'; else if (bHits.length) tier='medium';
+    return { tier, complete: answeredCount===rated.length, answeredCount, total: rated.length, cHits, bHits };
+  }
+  function tierLabel(t){ return t==='high'?'High Risk':t==='medium'?'Medium Risk':t==='low'?'Low Risk':'Pending'; }
+
+  const LOAN_CATEGORIES = ["Small loan in non-critical sector","Small loan in critical sector","Business Working Capital / Term Loan","Project Finance"];
+  const SUBSECTORS = ["Corporate Finance","Project Finance","Medium Enterprises","Small Enterprises with high-risk activities","Small Enterprises \u2013 regular activities","Trade with hazardous chemicals and substances","Trade with regular goods","Agriculture with crop production, animal farming, poultry and dairy","Agriculture NOT involving crop production, animal farming, poultry and dairy","Microfinance","Retail"];
+
+  const ESG_MODULES = [
+    { id:'esdd', order:'02', name:'E&S Due Diligence &amp; Risk Rating', status:'live', desc:'Run the ESDD checklist per client, auto-compute the ESRR tier, and draft the compliance / site-visit / mitigation summary for credit committee.', feeds:'Feeds the corrective action list and the portfolio dashboard below.' },
+    { id:'exclusion', order:'01', name:'Exclusion List Screening', status:'planned', desc:'Screen a prospective client\u2019s business activity against the bank\u2019s adopted E&S exclusion list before an ESDD checklist is even opened.', feeds:'Gates entry into ESDD.' },
+    { id:'categorisation', order:'03', name:'Client E&S Categorisation', status:'planned', desc:'Roll the ESRR tier up into the bank\u2019s Red / Amber / Green client categorisation.', feeds:'Reads from ESDD.' },
+    { id:'cap', order:'04', name:'Corrective Action Plan &amp; Monitoring', status:'planned', desc:'Turn each Medium/High client\u2019s mitigation actions into a tracked list with owners and monitoring checkpoints.', feeds:'Reads mitigation actions from ESDD.' },
+    { id:'covenants', order:'05', name:'E&S Covenants &amp; Legal Docs', status:'planned', desc:'Generate transaction-specific E&S covenants pre-filled from the corrective action plan.', feeds:'Reads from the Corrective Action Plan.' },
+    { id:'portfolio', order:'06', name:'Portfolio ESG Dashboard', status:'planned', desc:'Bank-wide view across all clients: risk tier distribution, trend over time, overdue actions.', feeds:'Aggregates every module above.' },
+  ];
+
+  function newAssessment(){
+    return { client:'', transactionId:'', location:'', sector:'', product:'', officer:'', businessLine:'', loanCategory:'', date:new Date().toISOString().slice(0,10),
+      answers:{}, summary:{ natureOfLoan:'', infoReviewed:'', keyIssues:'', environmentalCompliance:'', socialCompliance:'', covenantsMonitoring:'', furtherActions:'' } };
+  }
+  function normalizeSummary(s){
+    return Object.assign({ natureOfLoan:'', infoReviewed:'', keyIssues:'', environmentalCompliance:'', socialCompliance:'', covenantsMonitoring:'', furtherActions:'' }, s||{});
+  }
+
+  // ---------------- Boot ----------------
+  async function boot(){
+    if (state.token && state.user) {
+      try { await loadChecklist(); await loadAssessments(); }
+      catch(e) { logout(); return; }
+    }
+    render();
+  }
+
+  async function loadChecklist(){
+    const r = await api('/checklist');
+    state.checklist = r.checklist;
+  }
+  async function loadAssessments(){
+    const r = await api('/assessments');
+    state.assessments = r.assessments.map(a => ({ ...a, summary: normalizeSummary(a.summary) }));
+  }
+
+  // ---------------- Render ----------------
+  function render(){
+    if (!state.token || !state.user) { renderAuth(); return; }
+    const inModule = state.area === 'esdd';
+    root.innerHTML = `
+      <div id="sidebar">
+        ${ inModule ? `
+          <button class="sb-logout" data-area="ecosystem" style="margin-bottom:6px;">\u2190 ESG Ecosystem</button>
+          <div class="brand"><div class="mark">ESRR</div><h1>ESDD Risk<br/>Console</h1><div class="tag">E&amp;S Due Diligence</div></div>
+          <div class="sb-user">${esc(state.user.name)}<div class="role">${esc(state.user.role)}</div></div>
+          <div id="nav">
+            <button data-nav="dashboard" class="${state.view==='dashboard'?'active':''}"><span class="dot"></span>Client Register</button>
+            <button data-nav="form-new" class="${state.view==='form'?'active':''}"><span class="dot"></span>New Assessment</button>
+            ${ isPrivileged() ? `<button data-nav="review" class="${state.view==='review'?'active':''}"><span class="dot"></span>Review Queue</button>` : '' }
+            ${ isAdmin() ? `<button data-nav="admin-checklist" class="${state.view==='admin-checklist'?'active':''}"><span class="dot"></span>Checklist Admin</button>` : '' }
+            ${ isAdmin() ? `<button data-nav="admin-users" class="${state.view==='admin-users'?'active':''}"><span class="dot"></span>User Management</button>` : '' }
+          </div>
+          <div class="sb-foot">Rating: any (c) \u2192 High &middot; any (b), no (c) \u2192 Medium &middot; all (a)/(d) \u2192 Low.<br/><button class="sb-logout" data-logout style="margin-top:8px;">Log out</button></div>
+        ` : `
+          <div class="brand"><div class="mark">ESG</div><h1>ESG<br/>Ecosystem</h1><div class="tag">Bank &amp; FI Platform</div></div>
+          <div class="sb-user">${esc(state.user.name)}<div class="role">${esc(state.user.role)}</div></div>
+          <div id="nav"><button class="active"><span class="dot"></span>Overview</button></div>
+          <div class="sb-foot">A connected system for E&amp;S screening, due diligence, corrective action tracking and portfolio reporting.<br/><button class="sb-logout" data-logout style="margin-top:8px;">Log out</button></div>
+        `}
+      </div>
+      <div id="main">${ !inModule ? renderEcosystem() : renderModuleView() }</div>
+      ${ state.toast ? `<div class="toast">${esc(state.toast)}</div>` : '' }
+    `;
+    attachEvents();
+  }
+
+  function renderModuleView(){
+    if (!state.checklist) return `<div class="empty">Loading checklist\u2026</div>`;
+    if (state.view === 'form') return renderForm();
+    if (state.view === 'review') return renderReview();
+    if (state.view === 'admin-checklist') return renderAdminChecklist();
+    if (state.view === 'admin-users') return renderAdminUsers();
+    return renderDashboard();
+  }
+
+  // ---- Auth screens ----
+  function renderAuth(){
+    if (state.authView === 'force-password') {
+      root.innerHTML = `
+        <div id="auth-wrap"><div class="auth-card">
+          <div class="mark">ESRR</div>
+          <h2>Set a new password</h2>
+          <div class="sub">Your account was created with a temporary password. Choose a permanent one to continue.</div>
+          ${ state.authError ? `<div class="auth-err">${esc(state.authError)}</div>` : '' }
+          <div class="auth-field"><label>Current (temporary) password</label><input id="fp-current" type="password"/></div>
+          <div class="auth-field"><label>New password (min 8 characters)</label><input id="fp-new" type="password"/></div>
+          <button class="btn btn-primary" id="fp-submit" ${state.authBusy?'disabled':''}>${state.authBusy?'Saving\u2026':'Set password & continue'}</button>
+        </div></div>`;
+    } else {
+      root.innerHTML = `
+        <div id="auth-wrap"><div class="auth-card">
+          <div class="mark">ESRR</div>
+          <h2>ESDD Risk Console</h2>
+          <div class="sub">ESG Commons \u2014 sign in to continue.</div>
+          ${ state.authError ? `<div class="auth-err">${esc(state.authError)}</div>` : '' }
+          <div class="auth-field"><label>Email</label><input id="login-email" type="email" autocomplete="username"/></div>
+          <div class="auth-field"><label>Password</label><input id="login-password" type="password" autocomplete="current-password"/></div>
+          <button class="btn btn-primary" id="login-submit" ${state.authBusy?'disabled':''}>${state.authBusy?'Signing in\u2026':'Sign in'}</button>
+        </div></div>`;
+    }
+    attachAuthEvents();
+  }
+
+  function attachAuthEvents(){
+    const loginBtn = root.querySelector('#login-submit');
+    if (loginBtn) {
+      const submit = async () => {
+        const email = root.querySelector('#login-email').value.trim();
+        const password = root.querySelector('#login-password').value;
+        if (!email || !password) { state.authError = 'Enter your email and password'; render(); return; }
+        state.authBusy = true; state.authError = null; render();
+        try {
+          const r = await api('/auth/login', { method:'POST', body: JSON.stringify({ email, password }) });
+          state.token = r.token; state.user = r.user;
+          localStorage.setItem('esdd_token', r.token); localStorage.setItem('esdd_user', JSON.stringify(r.user));
+          if (r.mustResetPassword) { state.pendingCurrentPassword = password; state.authView = 'force-password'; state.authBusy = false; render(); return; }
+          await loadChecklist(); await loadAssessments();
+          state.authBusy = false; render();
+        } catch(e) { state.authError = e.message; state.authBusy = false; render(); }
+      };
+      loginBtn.addEventListener('click', submit);
+      root.querySelectorAll('#login-email, #login-password').forEach(el => el.addEventListener('keydown', e => { if (e.key==='Enter') submit(); }));
+    }
+    const fpBtn = root.querySelector('#fp-submit');
+    if (fpBtn) {
+      const submit = async () => {
+        const currentPassword = root.querySelector('#fp-current').value;
+        const newPassword = root.querySelector('#fp-new').value;
+        if (!newPassword || newPassword.length < 8) { state.authError = 'New password must be at least 8 characters'; render(); return; }
+        state.authBusy = true; state.authError = null; render();
+        try {
+          await api('/auth/change-password', { method:'POST', body: JSON.stringify({ currentPassword, newPassword }) });
+          state.authView = 'login'; state.authBusy = false; state.authError = null;
+          await loadChecklist(); await loadAssessments();
+          showToast('Password updated \u2014 you\u2019re all set');
+          render();
+        } catch(e) { state.authError = e.message; state.authBusy = false; render(); }
+      };
+      fpBtn.addEventListener('click', submit);
+    }
+  }
+
+  // ---- Ecosystem home ----
+  function renderEcosystem(){
+    return `
+      <div id="topbar"><div><h2>ESG Ecosystem</h2><div class="sub">One connected platform for environmental & social risk management, built module by module on the same client record.</div></div></div>
+      <div id="eco-eco-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">
+        ${ESG_MODULES.map(m => `
+          <div class="card" style="cursor:${m.status==='live'?'pointer':'default'};${m.status!=='live'?'opacity:.7;border-style:dashed;':''}" ${m.status==='live' ? `data-area="esdd"` : `data-soon="${esc(m.name.replace(/&amp;/g,'&'))}"`}>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span class="mono" style="font-size:11px;color:#9B9787;">${m.order}</span>
+              <span class="badge ${m.status==='live'?'low':'pending'}">${m.status==='live'?'Live':'Planned'}</span>
+            </div>
+            <h3 style="font-family:'Newsreader',serif;font-size:16px;font-weight:600;color:var(--navy);text-transform:none;letter-spacing:0;margin-bottom:8px;">${m.name}</h3>
+            <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:10px;">${m.desc}</div>
+            <div style="font-size:11px;color:#9B9787;font-style:italic;">${m.feeds}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // ---- Dashboard ----
+  function renderDashboard(){
+    const all = state.assessments;
+    const counts = { low:0, medium:0, high:0, pending:0 };
+    all.forEach(a => { if (!a.rating.complete) counts.pending++; else counts[a.rating.tier]++; });
+    let filtered = all.filter(a => {
+      const q = state.search.trim().toLowerCase();
+      if (q && !((a.client||'').toLowerCase().includes(q) || (a.sector||'').toLowerCase().includes(q) || (a.location||'').toLowerCase().includes(q))) return false;
+      if (state.filter !== 'all') { const t = a.rating.complete ? a.rating.tier : 'pending'; if (t !== state.filter) return false; }
+      return true;
+    });
+    return `
+      <div id="topbar">
+        <div><h2>Client Register</h2><div class="sub">Every E&amp;S due diligence assessment, with a live-computed risk rating.</div></div>
+        <button class="btn btn-primary" data-nav="form-new" style="width:auto;">+ New Assessment</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="n">${all.length}</div><div class="l">Total Clients</div></div>
+        <div class="stat low"><div class="n">${counts.low}</div><div class="l">Low Risk</div></div>
+        <div class="stat med"><div class="n">${counts.medium}</div><div class="l">Medium Risk</div></div>
+        <div class="stat high"><div class="n">${counts.high}</div><div class="l">High Risk</div></div>
+      </div>
+      <div class="searchrow">
+        <input id="search" type="text" placeholder="Search by client, sector or location\u2026" value="${esc(state.search)}"/>
+        <select id="filter">
+          <option value="all" ${state.filter==='all'?'selected':''}>All ratings</option>
+          <option value="low" ${state.filter==='low'?'selected':''}>Low risk</option>
+          <option value="medium" ${state.filter==='medium'?'selected':''}>Medium risk</option>
+          <option value="high" ${state.filter==='high'?'selected':''}>High risk</option>
+          <option value="pending" ${state.filter==='pending'?'selected':''}>Incomplete</option>
+        </select>
+      </div>
+      ${ filtered.length===0 ? `<div class="empty"><div class="serif">${all.length===0?'No assessments yet':'No matches'}</div><div>${all.length===0?'Start your first assessment to populate the register.':'Try a different search or filter.'}</div></div>` : `
+      <table><thead><tr><th>Client</th><th>Sector</th><th>Loan Category</th><th>Date</th><th>Status</th><th>Rating</th></tr></thead><tbody>
+        ${filtered.map(a => {
+          const badgeClass = a.rating.complete ? a.rating.tier : 'pending';
+          const badgeText = a.rating.complete ? tierLabel(a.rating.tier) : `Incomplete (${a.rating.answeredCount}/${a.rating.total})`;
+          return `<tr class="row" data-open="${a.id}">
+            <td class="client">${esc(a.client)||'(unnamed)'}</td>
+            <td class="muted">${esc(a.sector)||'\u2014'}</td>
+            <td class="muted">${esc(a.loan_category)||'\u2014'}</td>
+            <td class="muted">${fmtDate(a.assessment_date)}</td>
+            <td><span class="badge status ${a.status}">${esc(a.status)}</span></td>
+            <td><span class="badge ${badgeClass}">${esc(badgeText)}</span></td>
+          </tr>`;
+        }).join('')}
+      </tbody></table>`}
+    `;
+  }
+
+  // ---- Assessment form ----
+  function renderForm(){
+    const a = state.current;
+    const cl = state.checklist;
+    const rating = computeRating(cl, a.answers);
+    const badgeClass = rating.complete ? rating.tier : 'pending';
+    const badgeText = rating.complete ? tierLabel(rating.tier) : 'Pending';
+    let whyText = '';
+    if (rating.cHits.length) whyText = `Driven by a "High" (c) answer on <b>${rating.cHits.join(', ')}</b>.`;
+    else if (rating.bHits.length) whyText = `Driven by a "Medium" (b) answer on <b>${rating.bHits.join(', ')}</b>, no High answers.`;
+    else if (rating.complete) whyText = `All rated questions answered (a) or (d) \u2014 low residual risk.`;
+    else whyText = `${rating.total - rating.answeredCount} of ${rating.total} rated question(s) still need an answer.`;
+
+    const isOwner = a.created_by === state.user.id || a.id === undefined;
+    const isDraft = !a.status || a.status === 'draft';
+    const canEdit = isDraft && (isOwner || isAdmin());
+
+    return `
+      <div id="topbar">
+        <div><h2>${a.client ? esc(a.client) : 'New Assessment'} ${a.status ? `<span class="badge status ${a.status}" style="vertical-align:2px;margin-left:8px;">${esc(a.status)}</span>` : ''}</h2>
+        <div class="sub">Complete the checklist below. The rating recalculates live as you answer.</div></div>
+        <button class="btn btn-ghost" data-nav="dashboard" style="width:auto;">\u2190 Back to Register</button>
+      </div>
+      <div id="meterbar"><div class="meter">
+        <div class="mtop"><div class="label">E&amp;S Risk Rating (ESRR)</div><div class="val ${badgeClass}">${badgeText}</div></div>
+        <div class="track">
+          <div class="seg low ${rating.tier==='low'&&rating.complete?'active':''}"></div>
+          <div class="seg medium ${rating.tier==='medium'&&rating.complete?'active':''}"></div>
+          <div class="seg high ${rating.tier==='high'?'active':''}"></div>
+        </div>
+        <div class="why">${whyText}</div>
+        <div class="progress">${rating.answeredCount} / ${rating.total} rated questions answered</div>
+      </div></div>
+      ${ !canEdit ? `<div class="note">${isDraft ? 'You can view but not edit this assessment.' : 'This assessment has been submitted and is now read-only. Status: ' + esc(a.status) + (a.review_notes ? ' \u2014 ' + esc(a.review_notes) : '') }</div>` : '' }
+      <div class="card"><h3>Basic Information</h3><div class="grid2">
+        <div class="field"><label>Name of Client / Account</label><input id="f-client" value="${esc(a.client)}" ${canEdit?'':'disabled'}/></div>
+        <div class="field"><label>Transaction ID</label><input id="f-transactionId" value="${esc(a.transactionId||a.transaction_id||'')}" ${canEdit?'':'disabled'}/></div>
+        <div class="field"><label>Location</label><input id="f-location" value="${esc(a.location)}" ${canEdit?'':'disabled'}/></div>
+        <div class="field"><label>Industry / Sector</label><input id="f-sector" value="${esc(a.sector)}" ${canEdit?'':'disabled'}/></div>
+        <div class="field"><label>Product Manufactured / Traded</label><input id="f-product" value="${esc(a.product)}" ${canEdit?'':'disabled'}/></div>
+        <div class="field"><label>Relationship Official</label><input id="f-officer" value="${esc(a.officer)}" ${canEdit?'':'disabled'}/></div>
+        <div class="field"><label>Business Line (Sub-sector)</label><select id="f-businessLine" ${canEdit?'':'disabled'}><option value="">Select\u2026</option>${SUBSECTORS.map(s=>`<option value="${esc(s)}" ${(a.businessLine||a.business_line)===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
+        <div class="field"><label>Loan Category</label><select id="f-loanCategory" ${canEdit?'':'disabled'}><option value="">Select\u2026</option>${LOAN_CATEGORIES.map(s=>`<option value="${esc(s)}" ${(a.loanCategory||a.loan_category)===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>
+        <div class="field"><label>Date</label><input id="f-date" type="date" value="${(a.date||a.assessment_date||'').slice(0,10)}" ${canEdit?'':'disabled'}/></div>
+      </div></div>
+      ${cl.sections.map((sec, si) => `
+        <div class="qsection"><div class="sname"><span class="n">${si+1}</span> ${esc(sec.name)}</div>
+        ${sec.questions.map(q => { const ans = a.answers[q.id] || {}; return `
+          <div class="q"><div class="qhead"><div class="qnum">${esc(q.id)}</div>
+            <div class="qtext">${esc(q.text)} ${q.exclude?'<span class="excl">Informational \u2013 not rated</span>':''}</div></div>
+            <div class="opts">${['a','b','c','d'].map(k => `
+              <label class="opt ${ans.option===k?'sel-'+k:''}">
+                <input type="radio" name="opt-${q.id}" value="${k}" ${ans.option===k?'checked':''} data-qid="${q.id}" class="opt-radio" ${canEdit?'':'disabled'}/>
+                <span class="otext"><span class="olabel">${k})</span>${esc(q.options[k]||'')}</span>
+              </label>`).join('')}</div>
+            <div class="comment"><label>Comments / evidence</label>
+              <textarea data-comment-qid="${q.id}" ${canEdit?'':'disabled'} placeholder="Notes, documents, verbal confirmation, etc.">${esc(ans.comment)}</textarea>
+            </div>
+          </div>`; }).join('')}
+        </div>`).join('')}
+      <div class="card summary">
+        <div class="shead"><div><h3>E&amp;S Risk Summary (Annex 7)</h3><div class="shint">Draft it from the answers above, then edit freely.</div></div>
+          ${ canEdit ? `<button class="ai-btn" id="ai-draft" ${state.drafting?'disabled':''}><span class="mono">\u2726</span> ${state.drafting?'Drafting\u2026':'Draft with AI'}</button>` : '' }
+        </div>
+        ${[['natureOfLoan','1. Nature of the loan'],['infoReviewed','2. Environmental and social information reviewed'],['keyIssues','3. Key environmental and social issues'],['environmentalCompliance','4. Environmental regulatory compliance'],['socialCompliance','5. Social standards compliance'],['covenantsMonitoring','6. Suggested E&S covenants, supervision and monitoring'],['furtherActions','7. Further actions required']].map(([k,label]) => `
+          <div class="sumfield"><label>${label}</label><textarea data-sum="${k}" ${canEdit?'':'disabled'}>${esc(a.summary[k])}</textarea></div>
+        `).join('')}
+        ${ state.draftError ? `<div class="ai-note">${esc(state.draftError)}</div>` : `<div class="ai-note">AI drafts are a starting point \u2014 verify before relying on them.</div>` }
+      </div>
+      <div class="formfoot">
+        <div class="left">
+          ${ canEdit ? `<button class="btn btn-primary" id="f-save" style="width:auto;">Save Draft</button>` : '' }
+          ${ canEdit && a.id ? `<button class="btn btn-ghost" id="f-submit" style="width:auto;">Submit for Review</button>` : '' }
+          <button class="btn btn-ghost" data-nav="dashboard" style="width:auto;">Cancel</button>
+        </div>
+        ${ canEdit && a.id ? `<button class="btn btn-danger" id="f-delete" style="width:auto;">Delete</button>` : '' }
+      </div>
+    `;
+  }
+
+  // ---- Review queue (admin/reviewer) ----
+  function renderReview(){
+    const queue = state.assessments.filter(a => a.status === 'submitted');
+    return `
+      <div id="topbar"><div><h2>Review Queue</h2><div class="sub">Medium and High risk assessments must be escalated for approval before disbursement, per the Guideline's Step 6.</div></div></div>
+      ${ queue.length===0 ? `<div class="empty"><div class="serif">Nothing awaiting review</div><div>Submitted assessments will appear here.</div></div>` : `
+      <table><thead><tr><th>Client</th><th>Rating</th><th>Submitted</th><th></th></tr></thead><tbody>
+        ${queue.map(a => `<tr>
+          <td class="client">${esc(a.client)}</td>
+          <td><span class="badge ${a.rating.tier}">${tierLabel(a.rating.tier)}</span></td>
+          <td class="muted">${fmtDate(a.updated_at)}</td>
+          <td style="display:flex;gap:8px;">
+            <button class="icon-btn" data-open="${a.id}">View</button>
+            <button class="icon-btn" data-review-approve="${a.id}">Approve</button>
+            <button class="icon-btn" data-review-reject="${a.id}">Reject</button>
+          </td>
+        </tr>`).join('')}
+      </tbody></table>`}
+    `;
+  }
+
+  // ---- Admin: checklist editor ----
+  function renderAdminChecklist(){
+    const cl = state.checklist;
+    return `
+      <div id="topbar"><div><h2>Checklist Admin</h2><div class="sub">Edit questions, options, and which ones feed the risk rating.</div></div>
+        <button class="btn btn-primary" id="admin-save" style="width:auto;">Save Checklist</button></div>
+      <div class="note">Editing here saves a new checklist version (old ones are kept, so past assessments still reference what they were actually answered against).</div>
+      ${cl.sections.map((sec,si) => `
+        <div style="display:flex;align-items:center;gap:10px;margin:26px 0 10px;">
+          <span class="mono" style="color:#9B9787;font-size:12px;">${si+1}</span>
+          <input value="${esc(sec.name)}" data-sec-name="${sec.id}" style="max-width:340px;"/>
+        </div>
+        ${sec.questions.map(q => `
+          <div class="adminq">
+            <div class="rowtop"><span class="qid">Q${esc(q.id)}</span>
+              <label class="toggle"><input type="checkbox" data-exclude="${sec.id}|${q.id}" ${q.exclude?'checked':''}/> Exclude from rating</label>
+            </div>
+            <textarea data-qtext="${sec.id}|${q.id}">${esc(q.text)}</textarea>
+            ${['a','b','c','d'].map(k => `<div class="optrow"><div class="olabel">${k})</div><textarea data-qopt="${sec.id}|${q.id}|${k}">${esc(q.options[k]||'')}</textarea></div>`).join('')}
+          </div>
+        `).join('')}
+      `).join('')}
+    `;
+  }
+
+  // ---- Admin: user management ----
+  function renderAdminUsers(){
+    return `
+      <div id="topbar"><div><h2>User Management</h2><div class="sub">Create accounts for credit staff. Temporary passwords are shown once \u2014 relay them securely.</div></div></div>
+      <div class="card"><h3>Add User</h3><div class="grid2">
+        <div class="field"><label>Full name</label><input id="nu-name"/></div>
+        <div class="field"><label>Email</label><input id="nu-email" type="email"/></div>
+        <div class="field"><label>Role</label><select id="nu-role"><option value="assessor">Assessor</option><option value="reviewer">Reviewer</option><option value="admin">Admin</option></select></div>
+      </div><button class="btn btn-primary" id="nu-create" style="width:auto;margin-top:6px;">Create User</button></div>
+      <div class="card" id="user-list"><h3>Team</h3><div id="user-list-body">Loading\u2026</div></div>
+    `;
+  }
+  async function loadUserList(){
+    try {
+      const r = await api('/users');
+      const body = root.querySelector('#user-list-body');
+      if (!body) return;
+      body.innerHTML = r.users.map(u => `
+        <div class="userrow">
+          <div>${esc(u.name)}<div class="muted" style="font-size:11px;">${esc(u.email)}</div></div>
+          <div><span class="pill">${esc(u.role)}</span></div>
+          <div>${u.is_active ? 'Active' : 'Disabled'}</div>
+          <div><button class="icon-btn" data-toggle-active="${u.id}" data-active="${u.is_active}">${u.is_active?'Disable':'Enable'}</button></div>
+        </div>
+      `).join('');
+      body.querySelectorAll('[data-toggle-active]').forEach(el => el.addEventListener('click', async () => {
+        const id = el.getAttribute('data-toggle-active');
+        const isActive = el.getAttribute('data-active') === 'true';
+        await api('/users/'+id, { method:'PATCH', body: JSON.stringify({ isActive: !isActive }) });
+        loadUserList();
+      }));
+    } catch(e) { showToast(e.message); }
+  }
+
+  // ---------------- Events ----------------
+  function attachEvents(){
+    root.querySelectorAll('[data-area]').forEach(el => el.addEventListener('click', () => { state.area = el.getAttribute('data-area'); if (state.area==='esdd') state.view='dashboard'; render(); }));
+    root.querySelectorAll('[data-soon]').forEach(el => el.addEventListener('click', () => showToast(el.getAttribute('data-soon') + ' is planned \u2014 not built yet')));
+    root.querySelectorAll('[data-logout]').forEach(el => el.addEventListener('click', logout));
+
+    root.querySelectorAll('[data-nav]').forEach(el => el.addEventListener('click', () => {
+      const v = el.getAttribute('data-nav');
+      if (v === 'form-new') { state.current = newAssessment(); state.view = 'form'; }
+      else state.view = v;
+      if (v === 'admin-users') { render(); loadUserList(); return; }
+      window.scrollTo(0,0); render();
+    }));
+
+    root.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', (e) => {
+      const id = el.getAttribute('data-open');
+      const rec = state.assessments.find(x => String(x.id) === String(id));
+      state.current = { ...rec, summary: normalizeSummary(rec.summary) };
+      state.view = 'form'; window.scrollTo(0,0); render();
+    }));
+
+    const searchEl = root.querySelector('#search');
+    if (searchEl) searchEl.addEventListener('input', e => { state.search = e.target.value; render(); const el2=root.querySelector('#search'); el2.focus(); el2.setSelectionRange(state.search.length,state.search.length); });
+    const filterEl = root.querySelector('#filter');
+    if (filterEl) filterEl.addEventListener('change', e => { state.filter = e.target.value; render(); });
+
+    if (state.view === 'form') attachFormEvents();
+    if (state.view === 'review') attachReviewEvents();
+    if (state.view === 'admin-checklist') attachAdminChecklistEvents();
+    if (state.view === 'admin-users') attachAdminUsersEvents();
+  }
+
+  function attachFormEvents(){
+    const map = { 'f-client':'client','f-transactionId':'transactionId','f-location':'location','f-sector':'sector','f-product':'product','f-officer':'officer','f-businessLine':'businessLine','f-loanCategory':'loanCategory','f-date':'date' };
+    Object.keys(map).forEach(id => { const el = root.querySelector('#'+id); if (el) el.addEventListener('input', e => { state.current[map[id]] = e.target.value; }); });
+
+    root.querySelectorAll('.opt-radio').forEach(el => el.addEventListener('change', e => {
+      const qid = e.target.getAttribute('data-qid');
+      if (!state.current.answers[qid]) state.current.answers[qid] = { option:'', comment:'' };
+      state.current.answers[qid].option = e.target.value;
+      render();
+    }));
+    root.querySelectorAll('[data-comment-qid]').forEach(el => el.addEventListener('input', e => {
+      const qid = e.target.getAttribute('data-comment-qid');
+      if (!state.current.answers[qid]) state.current.answers[qid] = { option:'', comment:'' };
+      state.current.answers[qid].comment = e.target.value;
+    }));
+    root.querySelectorAll('[data-sum]').forEach(el => el.addEventListener('input', e => { state.current.summary[e.target.getAttribute('data-sum')] = e.target.value; }));
+
+    const aiBtn = root.querySelector('#ai-draft');
+    if (aiBtn) aiBtn.addEventListener('click', draftSummaryWithAI);
+
+    const saveBtn = root.querySelector('#f-save');
+    if (saveBtn) saveBtn.addEventListener('click', async () => {
+      if (!state.current.client || !state.current.client.trim()) { showToast('Add a client name before saving'); return; }
+      try {
+        const body = JSON.stringify(state.current);
+        const r = state.current.id
+          ? await api('/assessments/'+state.current.id, { method:'PATCH', body })
+          : await api('/assessments', { method:'POST', body });
+        await loadAssessments();
+        state.current = { ...r.assessment, summary: normalizeSummary(r.assessment.summary) };
+        showToast('Draft saved');
+        render();
+      } catch(e) { showToast(e.message); }
+    });
+
+    const submitBtn = root.querySelector('#f-submit');
+    if (submitBtn) submitBtn.addEventListener('click', async () => {
+      try {
+        await api('/assessments/'+state.current.id+'/submit', { method:'POST' });
+        await loadAssessments();
+        showToast('Submitted for review');
+        state.view = 'dashboard'; render();
+      } catch(e) { showToast(e.message); }
+    });
+
+    const delBtn = root.querySelector('#f-delete');
+    if (delBtn) delBtn.addEventListener('click', async () => {
+      if (!confirm('Delete this assessment?')) return;
+      try { await api('/assessments/'+state.current.id, { method:'DELETE' }); await loadAssessments(); state.view='dashboard'; showToast('Deleted'); render(); }
+      catch(e) { showToast(e.message); }
+    });
+  }
+
+  async function draftSummaryWithAI(){
+    if (!state.current.id) { showToast('Save the draft first, then draft with AI'); return; }
+    state.drafting = true; state.draftError = null; render();
+    try {
+      const r = await api('/assessments/'+state.current.id+'/draft-summary', { method:'POST' });
+      state.current.summary = normalizeSummary(r.summary);
+      showToast('Draft generated \u2014 review before saving');
+    } catch(e) { state.draftError = e.message; showToast('AI drafting failed'); }
+    state.drafting = false; render();
+  }
+
+  function attachReviewEvents(){
+    root.querySelectorAll('[data-review-approve]').forEach(el => el.addEventListener('click', () => reviewDecision(el.getAttribute('data-review-approve'), 'approved')));
+    root.querySelectorAll('[data-review-reject]').forEach(el => el.addEventListener('click', () => {
+      const notes = prompt('Reason for rejection (optional):') || '';
+      reviewDecision(el.getAttribute('data-review-reject'), 'rejected', notes);
+    }));
+  }
+  async function reviewDecision(id, decision, notes){
+    try { await api('/assessments/'+id+'/review', { method:'POST', body: JSON.stringify({ decision, notes }) }); await loadAssessments(); showToast('Assessment ' + decision); render(); }
+    catch(e) { showToast(e.message); }
+  }
+
+  function attachAdminChecklistEvents(){
+    root.querySelectorAll('[data-sec-name]').forEach(el => el.addEventListener('input', e => { state.checklist.sections.find(s=>s.id===el.getAttribute('data-sec-name')).name = e.target.value; }));
+    root.querySelectorAll('[data-qtext]').forEach(el => el.addEventListener('input', e => { const [sid,qid]=el.getAttribute('data-qtext').split('|'); state.checklist.sections.find(s=>s.id===sid).questions.find(q=>q.id===qid).text = e.target.value; }));
+    root.querySelectorAll('[data-qopt]').forEach(el => el.addEventListener('input', e => { const [sid,qid,k]=el.getAttribute('data-qopt').split('|'); state.checklist.sections.find(s=>s.id===sid).questions.find(q=>q.id===qid).options[k] = e.target.value; }));
+    root.querySelectorAll('[data-exclude]').forEach(el => el.addEventListener('change', e => { const [sid,qid]=el.getAttribute('data-exclude').split('|'); state.checklist.sections.find(s=>s.id===sid).questions.find(q=>q.id===qid).exclude = e.target.checked; }));
+    const saveBtn = root.querySelector('#admin-save');
+    if (saveBtn) saveBtn.addEventListener('click', async () => {
+      try { await api('/checklist', { method:'PUT', body: JSON.stringify({ checklist: state.checklist }) }); showToast('Checklist saved'); }
+      catch(e) { showToast(e.message); }
+    });
+  }
+
+  function attachAdminUsersEvents(){
+    const createBtn = root.querySelector('#nu-create');
+    if (createBtn) createBtn.addEventListener('click', async () => {
+      const name = root.querySelector('#nu-name').value.trim();
+      const email = root.querySelector('#nu-email').value.trim();
+      const role = root.querySelector('#nu-role').value;
+      if (!name || !email) { showToast('Name and email are required'); return; }
+      try {
+        const r = await api('/users', { method:'POST', body: JSON.stringify({ name, email, role }) });
+        alert('User created.\n\nEmail: ' + r.user.email + '\nTemporary password: ' + r.tempPassword + '\n\nShare this with them securely \u2014 it will not be shown again.');
+        root.querySelector('#nu-name').value=''; root.querySelector('#nu-email').value='';
+        loadUserList();
+      } catch(e) { showToast(e.message); }
+    });
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>

@@ -1,3 +1,5 @@
+// Mirrors computeRating() in the console: any (c) on a rated question -> High;
+// else any (b) -> Medium; else Low. Questions with exclude:true never count.
 function computeRating(checklist, answers) {
   const rated = [];
   checklist.sections.forEach((sec) => sec.questions.forEach((q) => { if (!q.exclude) rated.push(q); }));

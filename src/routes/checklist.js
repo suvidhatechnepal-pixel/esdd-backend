@@ -5,6 +5,7 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 const router = express.Router();
 router.use(requireAuth);
 
+// GET /checklist - current checklist, any logged-in user
 router.get('/', async (req, res) => {
   const { rows } = await pool.query(
     'SELECT id, checklist, created_at FROM checklist_versions WHERE is_current = true LIMIT 1'
@@ -13,6 +14,9 @@ router.get('/', async (req, res) => {
   res.json({ checklistVersionId: rows[0].id, checklist: rows[0].checklist, createdAt: rows[0].created_at });
 });
 
+// PUT /checklist - admin only: saves a new version and makes it current
+// (old versions are kept, not overwritten, so existing assessments still
+// reference the checklist shape they were actually answered against)
 router.put('/', requireRole('admin'), async (req, res) => {
   const { checklist } = req.body || {};
   if (!checklist || !Array.isArray(checklist.sections)) {

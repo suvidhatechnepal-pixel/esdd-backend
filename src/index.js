@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 
@@ -14,6 +15,11 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({ limit: '2mb' }));
+
+// Serve the frontend (public/index.html and any assets) from the same origin as
+// the API, so the browser app can use plain relative fetch('/auth/login') calls
+// with zero CORS configuration needed for its own UI.
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/health', (req, res) => res.json({ ok: true, service: 'esdd-risk-console-api' }));
 

@@ -1,3 +1,6 @@
+// Kept in sync with DEFAULT_CHECKLIST in esdd-risk-console.html.
+// If you edit questions in the Admin screen once the app is live, that edit is
+// saved as a new row in checklist_versions - this file only seeds the first one.
 module.exports = {
   sections: [
     {
